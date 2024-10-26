@@ -33,9 +33,30 @@ class Board():
     
     def get_size(self):
         return self.size
+    
+    def attack(self, x: int, y: int):
+        if self.board[x, y] == 1:
+            self.board[x, y] = 2
+        else:
+            self.board[x, y] = -1
+        
+        if np.all(self.board != 1):
+            return True
 
+    
+    def get_hidden_board(self):
+        return np.where(self.board == 1, 0, self.board)
 
 if __name__ == "__main__":
     board = Board(10)
     print(board.get_board())
-    print(board.get_size())
+    print(board.get_hidden_board())
+    print("-------------------")
+    board.attack(0, 0)
+    print(board.get_board())
+    print(board.get_hidden_board())
+    print("-------------------")
+    board.attack(6, 7)
+    print(board.get_board())
+    print(board.get_hidden_board())
+    print("-------------------")
