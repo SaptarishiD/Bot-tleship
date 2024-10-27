@@ -43,9 +43,11 @@ class Board():
         if np.all(self.board != 1):
             return True
 
-    
     def get_hidden_board(self):
         return np.where(self.board == 1, 0, self.board)
+    
+    def check_if_game_over(self):
+        return np.all(self.board != 1)
 
 if __name__ == "__main__":
     board = Board(10)
