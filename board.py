@@ -4,7 +4,7 @@ class Board():
     def __init__(self, size: int, ships: list[int] = [2, 3, 3, 4, 5]):
         self.board = np.zeros((size, size))
         self.size = size
-        
+        self.ships = ships
         for size in ships:
             placed = False
             while not placed:
@@ -34,15 +34,25 @@ class Board():
     def get_size(self):
         return self.size
     
+    def get_ships(self):
+        return self.ships
+    
     def attack(self, x: int, y: int):
+        # print(x,y)
+        # print(self.get_hidden_board())
+        # assert x >= 0 and x < self.size
+        # assert y >= 0 and y < self.size
+        # assert self.board[x, y] != -1
+        # assert self.board[x, y] != 2
         if self.board[x, y] == 1:
             self.board[x, y] = 2
+            
         else:
             self.board[x, y] = -1
         
         if np.all(self.board != 1):
             return True
-
+    
     def get_hidden_board(self):
         return np.where(self.board == 1, 0, self.board)
     
