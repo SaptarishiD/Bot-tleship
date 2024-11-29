@@ -1,12 +1,13 @@
 import numpy as np
 from board import Board
+from tqdm import tqdm
 
 def test_bot(n=100, board_size:int = 10, ships:list[int] = [2, 3, 3, 4, 5], Bot=None):
     if Bot is None:
         raise ValueError("Bot is not defined")
     
     total_moves = []
-    for i in range(n):
+    for i in tqdm(range(n)):
         board = Board(board_size, ships)
         bot = Bot(board)
         num_moves = 0

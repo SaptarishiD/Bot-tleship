@@ -5,28 +5,22 @@ class Board():
         self.board = np.zeros((size, size))
         self.size = size
         self.ships = ships
-        for size in ships:
+        for ship_size in ships:
             placed = False
             while not placed:
                 x = np.random.randint(0, self.size)
                 y = np.random.randint(0, self.size)
                 orientation = np.random.randint(0, 2)
                 if orientation == 0:
-                    if x + size < self.size:
-                        placed = True
-                        for i in range(size):
-                            if self.board[x + i, y] == 1:
-                                placed = False
-                                continue
-                            self.board[x + i, y] = 1
+                    if x + ship_size < self.size:
+                        if np.all(self.board[x:x+ship_size, y] == 0):
+                            self.board[x:x+ship_size, y] = np.ones_like(self.board[x:x+ship_size, y])
+                            placed = True
                 else:
-                    if y + size < self.size:
-                        placed = True
-                        for i in range(size):
-                            if self.board[x, y + i] == 1:
-                                placed = False
-                                continue
-                            self.board[x, y + i] = 1
+                    if y + ship_size < self.size:
+                        if np.all(self.board[x, y:y+ship_size] == 0):
+                            self.board[x, y:y+ship_size] = np.ones_like(self.board[x, y:y+ship_size])
+                            placed = True
         
     def get_board(self):
         return self.board
