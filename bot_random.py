@@ -16,6 +16,7 @@ class RandomBot():
         return self.board.attack(x, y)
     
 if __name__ == "__main__":
-    moves, mean, median, max, min, std = test_bot(100, 10, Bot=RandomBot)
+    moves, mean, median, max, min, std, avg_moves = test_bot(100, 10, Bot=RandomBot)
     print(f"Mean: {mean}, Median: {median}, Max: {max}, Min: {min}, Std: {std}")
+    print(avg_moves)
     
