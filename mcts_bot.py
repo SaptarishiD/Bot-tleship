@@ -37,7 +37,7 @@ class MCTSBot:
         
     def validate_partial_ship_placement(self, board, ships):
         """
-        Validate the current hits on the board and return partial validity.
+        Validate the new hits on the board and return partial validity.
         """
         visited = set()
         ship_lengths = []
@@ -103,7 +103,7 @@ class MCTSBot:
 
         # Reward based on validity
         valid_ships, valid_squares, penalty = self.validate_partial_ship_placement(temp_board, ships)
-        reward = (valid_squares / ship_squares) * valid_ships / len(ships)
+        reward = (valid_squares / ship_squares) * (valid_ships / len(ships))**2
         return reward
     
     def weighted_heatmap(self, board):
@@ -172,7 +172,7 @@ class MCTSBot:
                         return
         
         root = Node(self.board.get_hidden_board())
-        best_child = self.mcts(root, self.board.get_ships(), iteration_time=1, max_iterations=1000)
+        best_child = self.mcts(root, self.board.get_ships(), iteration_time=0.2, max_iterations=10000)
         
         x, y = np.where((best_child.board - root.board) == 2)
         
@@ -189,5 +189,5 @@ if __name__ == "__main__":
         bot.attack()
         print(board.get_hidden_board(), "\r")
     
-    moves, mean, median, max_, min_, std = test_bot(100, 10, Bot=MCTSBot)
+    moves, mean, median, max_, min_, std, avg_hits_at_move = test_bot(100, 10, Bot=MCTSBot)
     print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}")
