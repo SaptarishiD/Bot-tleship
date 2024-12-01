@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('/Users/user/Documents_stuff/Ashoka/monsoon24-courses/AI/project/final-project-bot-tleship/'))
 import board
 import gymnasium as gym
 import numpy as np
@@ -33,9 +33,9 @@ class BattleshipEnv(gym.Env):
 
         # Calculate reward
         if self.board.board[x, y] == 2:  # Hit
-            reward = 1.0
+            reward = 5.0
         elif self.board.board[x, y] == -1:  # Miss
-            reward = -0.1
+            reward = -1
         else:
             reward = -0.5
 

@@ -18,14 +18,17 @@ def test_bot(n=100, board_size:int = 10, ships:list[int] = [2, 3, 3, 4, 5], Bot=
             bot.attack()
             num_moves += 1
             hits = np.sum(board.get_board() == 2)
-            try:
-                avg_hits_at_move[num_moves-1] += hits
-                if hits != prev_hits:
-                    avg_moves_for_hit[hits-1] += num_moves
-                    prev_hits = hits
-            except:
-                print(board.get_board())
-                quit()
+            # try:
+            print(len(avg_hits_at_move))
+            print(num_moves)
+            avg_hits_at_move[num_moves-1] += hits
+            if hits != prev_hits:
+                avg_moves_for_hit[hits-1] += num_moves
+                prev_hits = hits
+            print(board.get_board())
+            # except:
+                # print(board.get_board())
+                # quit()
             # print(board.get_hidden_board())
         total_moves.append(num_moves)
     
