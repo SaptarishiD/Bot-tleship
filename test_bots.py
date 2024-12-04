@@ -44,6 +44,8 @@ def play_bots(bot1_class, bot2_class, board_size=10, n=100):
                 bot2_win_moves.append(bot2_move_count)
                 break
             
+            print(f"Game {_} | Bot1 moves: {bot1_move_count} | Bot2 moves: {bot2_move_count}")
+            
         if _ % 50 == 0:
             print(f"Game {_} completed")
     # Calculate statistics
