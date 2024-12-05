@@ -63,6 +63,7 @@ class HumanLikeBot:
             break
         else:
             self.state["mode"] = "hunt"  # Return to hunt mode if no targets remain
+            self.attack()
 
     def destroy_mode(self):
         while self.state["destroy_targets"]:
@@ -84,6 +85,7 @@ class HumanLikeBot:
             break
         else:
             self.state["mode"] = "hunt"  # Return to hunt mode if no destroy targets remain
+            self.attack()
 
     def update_targets(self):
         last_hit_x, last_hit_y = self.state["last_hit"]
@@ -132,5 +134,5 @@ class HumanLikeBot:
 
 
 if __name__ == "__main__":
-    moves, mean, median, max_, min_, std = test_bot(100, 10, Bot=HumanLikeBot)
-    print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}")
+    moves, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, Bot=HumanLikeBot)
+    print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")
