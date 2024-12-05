@@ -33,7 +33,7 @@ def test_bot(n=100, board_size:int = 10, ships:list[int] = [2, 3, 3, 4, 5], Bot=
     max, min = np.max(total_moves), np.min(total_moves)
     std = np.std(total_moves)
     avg_hits_at_move = [hits/n for hits in avg_hits_at_move]
-    print(avg_moves_for_hit)
+    #print(avg_moves_for_hit)
     avg_moves_for_hit = [moves/n for moves in avg_moves_for_hit]
     
     return total_moves, mean, median, max, min, std, avg_hits_at_move, avg_moves_for_hit
