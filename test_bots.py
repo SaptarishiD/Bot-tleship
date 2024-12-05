@@ -2,7 +2,8 @@ from board import Board
 from bot_random import RandomBot
 from bot_humanlike import HumanLikeBot
 import numpy as np
-
+from bot_dqn import DQNBot
+from tqdm import tqdm
 
 def play_bots(bot1_class, bot2_class, board_size=10, n=100):
     bot1_wins = 0
@@ -12,7 +13,7 @@ def play_bots(bot1_class, bot2_class, board_size=10, n=100):
     bot1_loss_moves = []
     bot2_loss_moves = []
     
-    for _ in range(n):
+    for _ in tqdm(range(n)):
         # Initialize boards for both bots
         board1 = Board(board_size)
         board2 = Board(board_size)
@@ -44,9 +45,9 @@ def play_bots(bot1_class, bot2_class, board_size=10, n=100):
                 bot2_win_moves.append(bot2_move_count)
                 break
             
-            print(f"Game {_} | Bot1 moves: {bot1_move_count} | Bot2 moves: {bot2_move_count}")
+            # print(f"Game {_} | Bot1 moves: {bot1_move_count} | Bot2 moves: {bot2_move_count}")
             
-        if _ % 50 == 0:
+        if _ % 100 == 0:
             print(f"Game {_} completed")
     # Calculate statistics
     bot1_win_avg_moves = sum(bot1_win_moves) / len(bot1_win_moves) if bot1_win_moves else 0
@@ -65,7 +66,7 @@ def play_bots(bot1_class, bot2_class, board_size=10, n=100):
     
 if __name__ == "__main__":
     # Play bots
-    results = play_bots(RandomBot, HumanLikeBot, board_size=10, n=1000)
+    results = play_bots(RandomBot, DQNBot, board_size=10, n=100)
     
     # Print results
     print("Bot1 wins:", results["bot1_wins"], "Win rate:", np.round(results["bot1_wins"] / results["total_games"], 3))
