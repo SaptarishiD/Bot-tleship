@@ -9,23 +9,27 @@ class BattleshipEnv(gym.Env):
     """
     metadata = {'render_modes': ['human'], 'render_fps': 4}
 
-    def __init__(self, render_mode=None, grid_size=10):
+    def __init__(self, render_mode=None, grid_size=10, max_moves=100):
         super().__init__()
         self.grid_size = grid_size
+        self.max_moves = max_moves  # Maximum number of moves allowed
         self.render_mode = render_mode
 
-        # Two-layer observation space: 
-        # Layer 1: Ships placement
-        # Layer 2: Hit/miss information
+        # Observation space: Ships placement + hit/miss information
         self.observation_space = spaces.Box(
-            low=0, high=10, 
-            shape=(2, grid_size, grid_size)
+            low=0, high=1, shape=(2, grid_size, grid_size), dtype=np.float32
         )
 
-        # Action space is all possible grid locations
+        # Action space: All possible grid locations (1D flattened)
         self.action_space = spaces.Discrete(grid_size * grid_size)
 
-        # Game state variables
+        # Internal state variables
+        self.ship_grid = None
+        self.hit_grid = None
+        self.remaining_ships = None
+        self.current_moves = 0  # Track moves
+
+        # Define the ship types
         self.ships = [
             {'size': 5, 'name': 'Carrier'},
             {'size': 4, 'name': 'Battleship'},
@@ -33,112 +37,98 @@ class BattleshipEnv(gym.Env):
             {'size': 3, 'name': 'Submarine'},
             {'size': 2, 'name': 'Destroyer'}
         ]
-        
-        # Reset variables
-        self.ship_grid = None
-        self.hit_grid = None
-        self.remaining_ships = None
 
     def _place_ships(self):
         """
         Randomly place ships on the grid
         """
-        self.ship_grid = np.zeros((self.grid_size, self.grid_size))
-        placed_ships = []
-
+        self.ship_grid = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
         for ship in self.ships:
             while True:
                 orientation = random.choice(['horizontal', 'vertical'])
                 if orientation == 'horizontal':
                     x = random.randint(0, self.grid_size - ship['size'])
                     y = random.randint(0, self.grid_size - 1)
-                    if np.all(self.ship_grid[y, x:x+ship['size']] == 0):
-                        self.ship_grid[y, x:x+ship['size']] = 1
-                        placed_ships.append({
-                            'name': ship['name'], 
-                            'coords': [(y, x+i) for i in range(ship['size'])]
-                        })
+                    if np.all(self.ship_grid[y, x:x + ship['size']] == 0):
+                        self.ship_grid[y, x:x + ship['size']] = 1
                         break
-                else:  # vertical
+                else:
                     x = random.randint(0, self.grid_size - 1)
                     y = random.randint(0, self.grid_size - ship['size'])
-                    if np.all(self.ship_grid[y:y+ship['size'], x] == 0):
-                        self.ship_grid[y:y+ship['size'], x] = 1
-                        placed_ships.append({
-                            'name': ship['name'], 
-                            'coords': [(y+i, x) for i in range(ship['size'])]
-                        })
+                    if np.all(self.ship_grid[y:y + ship['size'], x] == 0):
+                        self.ship_grid[y:y + ship['size'], x] = 1
                         break
 
-        return placed_ships
-    
     def step(self, action):
         """
-        Take an action in the environment
+        Perform an action in the environment.
+        Args:
+            action (int): The index of the action to take.
+        Returns:
+            observation, reward, terminated, truncated, info
         """
-        # Convert 1D action to 2D coordinates
         y = action // self.grid_size
         x = action % self.grid_size
 
-        # Track if this is a hit or miss
+        reward = 0
         terminated = False
         truncated = False
-        reward = 0
-        
-        # Check if action is valid (not already shot)
+
+        # Check if the action is valid
         if self.hit_grid[y, x] == 1:
-            reward = -1  # Penalty for repeating a shot
+            reward -= 2*self.grid_size # Penalty for trying an invalid move
+            #choose random legal move:
+            # while self.hit_grid[y, x] == 1:
+            #     y = random.randint(0, self.grid_size - 1)
+            #     x = random.randint(0, self.grid_size - 1)
             truncated = True
         else:
             self.hit_grid[y, x] = 1
-
-            # Check if hit
             if self.ship_grid[y, x] == 1:
-                reward = 1 # Reward for hitting a ship
-                
-                # Remove coordinate from remaining ships
-                if (y, x) in self.remaining_ships:
-                    self.remaining_ships.remove((y, x))
-                
-                # Check if all ships are sunk
+                reward = self.grid_size  # Reward for hitting a ship
+                self.remaining_ships.remove((y, x))
                 if len(self.remaining_ships) == 0:
-                    reward = 10  # Major reward for sinking all ships
+                    reward = self.grid_size * self.grid_size  # Bonus for sinking all ships
                     terminated = True
             else:
-                reward = -1  # Small penalty for missing
+                reward = -1  # Penalty for missing
 
-        # Create observation
-        observation = np.stack([self.ship_grid, self.hit_grid], dtype=np.float32)
+        # Increment move count
+        self.current_moves += 1
+        if self.current_moves >= self.max_moves:
+            truncated = True
 
-        return observation, reward, terminated, truncated, {}
-    
+        observation = np.stack([self.ship_grid, self.hit_grid], axis=0)
+        info = {}
+
+        return observation, reward, terminated, truncated, info
+
     def reset(self, seed=None, options=None):
         """
-        Reset the environment to initial state
+        Reset the environment to its initial state.
         """
         super().reset(seed=seed)
 
-        # Reset game state
-        self.hit_grid = np.zeros((self.grid_size, self.grid_size))
+        # Reset internal state variables
+        self.current_moves = 0
+        self.hit_grid = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
         self._place_ships()
-        
-        # Track remaining ship coordinates
-        self.remaining_ships = []
-        for y in range(self.grid_size):
-            for x in range(self.grid_size):
-                if self.ship_grid[y, x] == 1:
-                    self.remaining_ships.append((y, x))
-                    
-        observation = np.stack([self.ship_grid, self.hit_grid], dtype=np.float32)
-        
 
-        return observation, {}
+        # Create a list of all ship coordinates
+        self.remaining_ships = [
+            (y, x) for y in range(self.grid_size) for x in range(self.grid_size)
+            if self.ship_grid[y, x] == 1
+        ]
 
-    
+        # Generate initial observation and action mask
+        observation = np.stack([self.ship_grid, self.hit_grid], axis=0)
+        info = {}
+
+        return observation, info
 
     def render(self):
         """
-        Render the current game state
+        Render the current game state.
         """
         if self.render_mode == 'human':
             print("Ship Grid:")
@@ -148,6 +138,6 @@ class BattleshipEnv(gym.Env):
 
     def close(self):
         """
-        Close the environment
+        Clean up any resources.
         """
         pass

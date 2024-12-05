@@ -37,3 +37,9 @@ def test_bot(n=100, board_size:int = 10, ships:list[int] = [2, 3, 3, 4, 5], Bot=
     avg_moves_for_hit = [moves/n for moves in avg_moves_for_hit]
     
     return total_moves, mean, median, max, min, std, avg_hits_at_move, avg_moves_for_hit
+
+if __name__ == "__main__":
+    moves, mean, median, max, min, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, [2, 3, 3, 4, 5], Bot=RandomBot)
+    print(f"Mean: {mean}, Median: {median}, Max: {max}, Min: {min}, Std: {std}")
+    print(avg_hits_at_move)
+    print(avg_moves_for_hit)
