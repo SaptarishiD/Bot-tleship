@@ -134,5 +134,5 @@ class HumanLikeBot:
 
 
 if __name__ == "__main__":
-    moves, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, Bot=HumanLikeBot)
+    moves, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(1000, 10, Bot=HumanLikeBot)
     print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")
