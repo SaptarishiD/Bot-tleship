@@ -145,7 +145,7 @@ def train_model():
     replay_buffer = ReplayBuffer(buffer_size=1000)
 
     trainer = DQNTrainer(model, target_model, replay_buffer)
-    num_epochs= 150
+    num_epochs= 3000
     epsilon = 0.2  
     update_steps = 100  
     agent = DQNAgent(model, num_actions)
@@ -180,7 +180,17 @@ def train_model():
             top = shots_total
         print("Reward:", reward_total, "Shots:", shots_total)
         
-        model.save("bot_dqn.keras")
+        
+        try:
+            if epoch == 150:
+                model.save("bot_dqn_updated_150.keras")
+            
+            if epoch % 500 == 0:
+                model.save(f"bot_dqn_updated_{epoch}.keras")
+        except:
+            pass
+         
+        model.save("bot_dqn_final.keras")   
 
     print("Model Trained!\n")
 
@@ -205,7 +215,7 @@ class DQNBot: #for testing
         self.board = board
         self.env = BattleshipEnvironment(board_size=board.get_size())
         self.num_actions = self.env.board_size ** 2
-        self.model = keras.models.load_model("bot_dqn.keras")
+        self.model = keras.models.load_model("bot_dqn_final.keras")
         self.agent = DQNAgent(self.model, self.num_actions)
         self.state = self.env.reset()
         self.valid_moves = set(range(self.num_actions))  
@@ -221,8 +231,9 @@ class DQNBot: #for testing
         self.valid_moves.discard(action)
 
 if __name__ == '__main__':
+    # train_model()
     
-    model = keras.models.load_model("bot_dqn.keras")
+    # model = keras.models.load_model("bot_dqn.keras")
     
     total, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, [2, 3, 3, 4, 5], Bot=DQNBot)
     print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")
