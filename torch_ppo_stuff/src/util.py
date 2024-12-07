@@ -41,37 +41,6 @@ def load_agent(dir_name, args, agent):
 
 
 
-def collect_trajectories(env, n_samples, device, policy, value_fn, max_steps=500):
-    buf = PPOBuffer()
-    state, done = env.reset(), False
-    steps = 0
-    traj_id = buf.create_traj()
-    sum_rews = []
-    total_reward = 0
-    traj_lens = []
-    last_rews = []
-    while buf.size() < n_samples:
-        action, log_prob = policy(state)
-        next_state, reward, done, _ = env.step(action)
-        buf.put_single_data(traj_id, state, action, log_prob, reward)
-        state = next_state
-        total_reward += reward
-        steps += 1
-        if done or steps == max_steps or buf.size() == n_samples:
-            buf.finish_traj(traj_id, 0.0 if done else value_fn(state))
-            if buf.size() < n_samples:
-                sum_rews.append(total_reward)
-                total_reward = 0
-                traj_lens.append(steps)
-                last_rews.append(reward)
-                state, done, steps = env.reset(), False, 0
-                traj_id = buf.create_traj()
-    rollout_info = {
-        "sum_rew_avg": np.mean(sum_rews),
-        "traj_len_avg": np.mean(traj_lens),
-        "last_rew_avg": np.mean(last_rews)
-    }
-    return buf.get(device), rollout_info
 
 
 def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, max_steps=500,
@@ -130,70 +99,3 @@ def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, m
     }
     return buf.get(device), rollout_info
 
-
-def run_evaluation(env_fn, n_trajectories, policy, max_steps=500, render_callback=None, policy_accepts_batch=False):
-
-    env = DummyVecEnv([env_fn])
-    
-    states = env.reset()
-    vec_dim = states.shape[0]
-    # ensure that the policy can accept batches
-    if not policy_accepts_batch:
-        def batch_policy(p, sts):
-            return np.array([p(s) for s in sts])
-        policy = partial(batch_policy, policy)
-    # do parallel rollout
-    steps = np.zeros(vec_dim)
-    sum_rews = np.zeros(vec_dim)
-    # traj_lens = np.zeros(vec_dim)
-    last_rews = np.zeros(vec_dim)
-    finished = np.array([False] * vec_dim)
-    if render_callback is not None:
-        render_callback(env)
-    while not finished.all():
-        # get actions and step in environment
-        actions = policy(states)
-        states, rewards, dones, _ = env.step(actions)
-        mask = ~finished
-        sum_rews[mask] += rewards[mask]  # add rewards to unfinished trajectories
-        steps[mask] += 1
-        last_rews[mask] = rewards[mask]
-        finished = finished | dones | (steps == max_steps)
-        if render_callback is not None:
-            render_callback(env)
-    return reduce_eval(steps, sum_rews, last_rews)
-
-
-def reduce_eval(traj_lens, traj_rews, last_rews):
-    return dict(sum_rew_avg=np.mean(traj_rews), sum_rew_std=np.std(traj_rews),
-                sum_rew_min=np.min(traj_rews), sum_rew_max=np.max(traj_rews),
-                traj_len_avg=np.mean(traj_lens), last_rew_avg=np.mean(last_rews),
-                norm_rew_avg=np.mean(np.array(traj_rews)/np.array(traj_lens)))
-
-
-def run_evaluation_seq(env_fn, n_trajectories, policy, max_steps=500, render_callback=None, reduce_info=True):
-    env = env_fn()
-    traj_rews = []
-    traj_lens = []
-    last_rews = []
-    for _ in range(n_trajectories):
-        state, done, steps = env.reset(), False, 0
-        if render_callback is not None:
-            render_callback(env)
-        rewards = []
-        while not done and steps < max_steps:
-            action = policy(state)
-            state, reward, done, _ = env.step(action)
-            if render_callback is not None:
-                render_callback(env)
-            rewards.append(reward)
-            steps += 1
-        last_rews.append(rewards[-1])
-        traj_lens.append(steps)
-        traj_rews.append(np.sum(rewards))
-    if render_callback is not None:
-        env.close()
-    if reduce_info:
-        return reduce_eval(traj_lens, traj_rews, last_rews)
-    else:
-        return dict(traj_lens=traj_lens, traj_rews=traj_rews, last_rews=last_rews)

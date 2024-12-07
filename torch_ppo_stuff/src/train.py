@@ -11,8 +11,8 @@ from .vec_env import DummyVecEnv
 
 
 from .util import collect_trajectories_vec_env, save_agent, load_agent
-from .battleship_util import create_agent_from_args, create_env_fn, run_eval
-from .eval import eval
+from .battleship_util import create_agent_from_args, create_env_fn
+
 
 import torch
 

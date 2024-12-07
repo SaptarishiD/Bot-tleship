@@ -5,7 +5,7 @@ from .actor_critic import MultiDiscActor, Critic
 
 from .BattleshipActor import BattleshipActor
 from .env import BattleshipEnv
-from .util import run_evaluation_seq
+
 
 
 def run_eval(env_fn, actor: BattleshipActor, n_ep, max_steps, render_callback=None, reduce_info=True):
