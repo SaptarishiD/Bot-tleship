@@ -2,7 +2,12 @@ import torch
 from torch.distributions import Categorical
 from torch.distributions.utils import logits_to_probs
 
-from .actor_critic import ActorBase, create_network
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
+
+
+from actor_critic import ActorBase, create_network
 
 
 class BattleshipActor(ActorBase):

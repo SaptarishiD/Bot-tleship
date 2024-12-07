@@ -80,13 +80,10 @@ class PPO(AgentBase):
 
     def _discount_cumsum(self, arr, discount):
         """shape of arr is (step+1, 1)"""
-        # Weirdly enough, despite the moving of the tensors back and forth, this is much faster than
-        # naively doing it with pytorch operations. Go figure.
+      
         if type(arr) == torch.Tensor:
             arr = arr.cpu().numpy()
-        # taken from OpenAI Spinning Up (which took it from rllab)
         ret_np = scipy.signal.lfilter([1], [1, float(-discount)], arr[::-1], axis=0)[::-1]
-        # copy is necessary because of negative stride
         return torch.tensor(ret_np.copy(), dtype=torch.float32, device=self.device)
 
     def _gae(self, rewards, values, last_val):
@@ -203,7 +200,6 @@ class PPO(AgentBase):
 
 
         for _ in range(critic_steps):
-            # value function clipping
             value_pred = self.critic(states)
             value_pred_clipped = self.clamp(value_pred, old_values - self.clip_ratio, old_values + self.clip_ratio)
             if self.do_assert:

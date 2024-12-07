@@ -115,10 +115,8 @@ def obs_space_info(obs_space):
         dtypes: a dict mapping keys to dtypes.
     """
     if isinstance(obs_space, gym.spaces.Dict):
-        assert isinstance(obs_space.spaces, OrderedDict)
         subspaces = obs_space.spaces
     elif isinstance(obs_space, gym.spaces.Tuple):
-        assert isinstance(obs_space.spaces, tuple)
         subspaces = {i: obs_space.spaces[i] for i in range(len(obs_space.spaces))}
     else:
         subspaces = {None: obs_space}

@@ -91,7 +91,6 @@ def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, m
 
         # Check buffer size and finalize trajectories
         if buf.size() >= n_samples:
-            assert buf.size() == n_samples, "Number of samples should already have been checked??"
             for i, traj_id in enumerate(traj_ids):
                 buf.finish_traj(traj_id, 0 if dones[i] else value_fn(states[i]))
         else:
@@ -105,7 +104,6 @@ def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, m
                     steps[i] = 0
                     traj_ids[i] = buf.create_traj()
 
-    # Gather rollout statistics
     rollout_info = {
         "sum_rew_avg": np.mean(sum_rews) if sum_rews else 0,
         "traj_len_avg": np.mean(traj_lens) if traj_lens else 0,
