@@ -5,6 +5,7 @@ import numpy as np
 
 
 # from the openai official library code: https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/core.py
+# we also referred to: https://github.com/abhaybd/Fleet-AI
 
 class MultiCategorical(Distribution):
     def __init__(self, dists):
@@ -40,7 +41,10 @@ class ActorBase(nn.Module):
 
     def eval_actions(self, states, actions):
         dist = self._distribution(states)
-        return self._log_prob(dist, actions), dist.entropy().mean()
+        return dist.log_prob(actions).unsqueeze(-1), dist.entropy().mean()
+    
+    def greedy(self, state):
+        return self._distribution(state).argmax()
 
 
 
@@ -57,12 +61,6 @@ class MultiDiscActor(ActorBase):
         base_out = self.base_net(state)
         dists = [Categorical(logits=layer(base_out)) for layer in self.outputs]
         return MultiCategorical(dists)
-
-    def _log_prob(self, dist, actions):
-        return dist.log_prob(actions).unsqueeze(-1)
-
-    def greedy(self, state):
-        return self._distribution(state).argmax()
 
     def to(self, device):
         super().to(device)

@@ -1,6 +1,6 @@
 import torch
 
-
+# Citation: we referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game
 class AgentBase(object):
     def __init__(self, *args):
         self.init_args = args

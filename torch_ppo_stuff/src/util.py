@@ -10,30 +10,35 @@ from .ppo import PPOBuffer
 from .vec_env import DummyVecEnv
 
 
+"""
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
+"""
+
+
+
 def get_save_paths(args):
-    """Generate save directory and agent path."""
     dir_name = os.path.join(args["agent"]["save_dir"], args["agent"]["model_name"])
     agent_path = f"{os.path.join(dir_name, args['agent']['algo'])}.pt"
     return dir_name, agent_path
 
 
 def save_agent(args, agent):
-    """Save the agent and configuration."""
     dir_name, agent_path = get_save_paths(args)
-    os.makedirs(dir_name, exist_ok=True)  # Ensure directory exists
+    os.makedirs(dir_name, exist_ok=True)  
     
-    # Save agent
+    
     agent.save(agent_path)
     print(f"Agent saved to {agent_path}")
 
-    # Save configuration as JSON
-    args_path = os.path.join(dir_name, "config.json")
+    
+    args_path = os.path.join(dir_name, "config.yaml")
     with open(args_path, "w") as f:
-        json.dump(args, f, indent=4)
+        yaml.dump(args, f, default_flow_style=False)
     print(f"Configuration saved to {args_path}")
 
 def load_agent(args, agent):
-    """Load the agent if specified."""
     _, agent_path = get_save_paths(args)
 
     file_exists = os.path.isfile(agent_path)
@@ -44,14 +49,9 @@ def load_agent(args, agent):
         print(f"Agent loaded from {agent_path}")
     elif file_exists and not resume:
         raise Exception("A model exists at the save path. Use 'resume' flag to continue training.")
-    elif resume and not file_exists:
-        raise Exception("Resume flag specified, but no model found.")
-    else:
-        print("No pre-existing model found. Starting fresh training.")
 
 def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, max_steps=500,
                                  policy_accepts_batch=False):
-    """Collect trajectories from a vectorized environment."""
     states = vec_env.reset()
     vec_dim = states.shape[0]
 
@@ -59,7 +59,7 @@ def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, m
     traj_ids = [buf.create_traj() for _ in range(vec_dim)]
     steps = np.zeros((vec_dim,))
 
-    # Ensure the policy can accept batches
+
     if not policy_accepts_batch:
         def batch_policy(p, sts):
             acts, lps = [], []
@@ -70,26 +70,26 @@ def collect_trajectories_vec_env(vec_env, n_samples, device, policy, value_fn, m
             return np.array(acts), np.array(lps)
         policy = partial(batch_policy, policy)
 
-    # Initialize trackers
+    
     sum_rew_tracker = np.zeros(vec_dim)
     sum_rews = []
     traj_lens = []
     last_rews = []
 
     while buf.size() < n_samples:
-        # Get actions and step in environment
+        
         actions, log_probs = policy(states)
         next_states, rewards, dones, _ = vec_env.step(actions)
         sum_rew_tracker += rewards.flatten()
 
-        # Store data in buffer
+        
         for i, traj_id in enumerate(traj_ids):
             buf.put_single_data(traj_id, states[i], actions[i], log_probs[i], rewards[i])
 
         states = next_states
         steps += 1
 
-        # Check buffer size and finalize trajectories
+        
         if buf.size() >= n_samples:
             for i, traj_id in enumerate(traj_ids):
                 buf.finish_traj(traj_id, 0 if dones[i] else value_fn(states[i]))

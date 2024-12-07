@@ -12,26 +12,17 @@ from .AgentBase import AgentBase
 main references from official openai baselines library
     https://github.com/openai/baselines/tree/master/baselines/ppo2
     https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
 """
 
 
 class PPO(AgentBase):
-    def __init__(self,
-                 device,
-                 actor_fn,
-                 critic_fn,
-                 target_kl=0.015,
-                 clip_ratio=0.2,
-                 discount=0.99,
-                 gae_lam=0.97,
-                 entropy_coeff=0.01,
-                 actor_learning_rate=1e-4,
-                 critic_learning_rate=1e-4,
-                 do_assert=False
-                 ):
+    def __init__(self,device,actor_fn,critic_fn,target_kl=0.015,clip_ratio=0.2,discount=0.99,gae_lam=0.97,entropy_coeff=0.01,actor_learning_rate=1e-4,critic_learning_rate=1e-4):
         super().__init__(device, actor_fn, critic_fn,
                          target_kl, clip_ratio, discount, gae_lam, entropy_coeff,
-                         actor_learning_rate, critic_learning_rate, do_assert)
+                         actor_learning_rate, critic_learning_rate)
         self.device = device
 
         self.actor = actor_fn(device)
@@ -51,7 +42,7 @@ class PPO(AgentBase):
         self.discount = discount
         self.gae_lam = gae_lam
         self.entropy_coeff = entropy_coeff
-        self.do_assert = do_assert
+      
 
         self.vf_loss_fn = nn.MSELoss()
 
@@ -79,8 +70,7 @@ class PPO(AgentBase):
         return torch.min(torch.max(a, lo), hi)
 
     def _discount_cumsum(self, arr, discount):
-        """shape of arr is (step+1, 1)"""
-      
+    
         if type(arr) == torch.Tensor:
             arr = arr.cpu().numpy()
         ret_np = scipy.signal.lfilter([1], [1, float(-discount)], arr[::-1], axis=0)[::-1]
@@ -100,10 +90,6 @@ class PPO(AgentBase):
     def _policy_loss(self, states, actions, old_log_probs, advantages):
         log_probs, entropy = self.actor.eval_actions(states, actions)
         policy_ratios = torch.exp(log_probs - old_log_probs)
-
-        if self.do_assert:
-            assert log_probs.shape == old_log_probs.shape == policy_ratios.shape == advantages.shape
-            assert entropy.shape == ()
 
         # policy clipping
         policy_objective1 = policy_ratios * advantages
@@ -145,10 +131,6 @@ class PPO(AgentBase):
         advantages = torch.cat(advantages, dim=0)
         rewards_to_go = torch.cat(rewards_to_go, dim=0)
 
-        if self.do_assert:
-            assert all(len(x.shape) == 2 for x in [states, actions, old_log_probs, rewards, advantages, rewards_to_go])
-            assert all(x.shape[0] == states.shape[0] for x in [states, actions, old_log_probs, advantages, rewards_to_go])
-            assert all(x.shape[1] == 1 for x in [old_log_probs, rewards, advantages, rewards_to_go])
 
         # normalize advantages
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
@@ -202,8 +184,7 @@ class PPO(AgentBase):
         for _ in range(critic_steps):
             value_pred = self.critic(states)
             value_pred_clipped = self.clamp(value_pred, old_values - self.clip_ratio, old_values + self.clip_ratio)
-            if self.do_assert:
-                assert value_pred.shape == value_pred_clipped.shape == rewards_to_go.shape
+           
             vf_loss1 = self.vf_loss_fn(value_pred, rewards_to_go)
             vf_loss2 = self.vf_loss_fn(value_pred_clipped, rewards_to_go)
             vf_loss = torch.min(vf_loss1, vf_loss2)

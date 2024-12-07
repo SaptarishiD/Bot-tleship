@@ -4,6 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import gym
 
+# https://www.gymlibrary.dev
+
+"""
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
+"""
+
+
 class _Ship(object):
     def __init__(self, size, row, col, dr, dc):
         self.size = size
@@ -15,26 +24,22 @@ class _Ship(object):
 
 class BattleshipEnv(gym.Env):
     def __init__(self, observation_space, action_space, board_width=10, board_height=10,
-                 ships=(1, 2, 3, 4, 5), latent_var_precision=8):
+                 ships=(2, 3, 3, 4, 5), latent_var_precision=8):
         self.board = np.zeros((board_height, board_width), dtype=bool)
-        self.ship_lens = sorted(ships)
-        self.shots = np.zeros_like(self.board, dtype=bool)
+        self.ship_lens = (5,4,3,3,2)
+        self.shots = np.zeros((board_height, board_width), dtype=bool)
         self.observation_space_type = observation_space
         self.action_space_type = action_space
         self.latent_var_precision = latent_var_precision
         self.ships = None
 
-        if action_space == "coords":
-            self.action_space = gym.spaces.MultiDiscrete((board_height, board_width))
-        elif action_space == "flat":
-            self.action_space = gym.spaces.Discrete(board_height * board_width)
-        else:
-            raise Exception(f"Unrecognized action space {action_space}")
 
-        allowed_parts = {"flat", "ships", "latent"}
+        self.action_space = gym.spaces.Discrete(board_height * board_width)
+
+
+      
         parts = observation_space.split("-")
-        assert len(set(parts)) == len(parts), "No repeated parts in observation space!"
-        assert all(p in allowed_parts for p in parts), "Unrecognized part in " + observation_space
+      
         parts = set(parts)
         state_dim = 0
         if "flat" in parts:
@@ -46,9 +51,6 @@ class BattleshipEnv(gym.Env):
         self.observation_space = gym.spaces.MultiBinary(state_dim)
         self.reset()
 
-    def _is_sunk(self, ship: _Ship):
-        row, col = ship.row, ship.col
-        return all(self.shots[row + i * ship.dr, col + i * ship.dc] for i in range(ship.size))
 
     def _observe(self):
         hits = (self.board & self.shots).astype(np.int8)
@@ -58,15 +60,13 @@ class BattleshipEnv(gym.Env):
             misses_hits = np.hstack((misses.flatten(), hits.flatten()))
             obs = np.hstack((obs, misses_hits))
         if "ships" in self.observation_space_type:
-            ship_obs = np.array([self._is_sunk(ship) for ship in self.ships], dtype=np.int8)
+            ship_obs = np.array([all(self.shots[ship.row + i * ship.dr, ship.col + i * ship.dc] for i in range(ship.size)) for ship in self.ships], dtype=np.int8)
             obs = np.hstack((obs, ship_obs))
         if "latent" in self.observation_space_type:
             bits = (np.random.random(self.latent_var_precision) >= 0.5).astype(np.int8)
             obs = np.hstack((obs, bits))
         return obs
 
-    def _done(self):
-        return (self.board == (self.board & self.shots)).all()
 
     def step(self, action: Any):
         if self.action_space_type == "coords":
@@ -104,16 +104,14 @@ class BattleshipEnv(gym.Env):
         # plt.show()
         # plt.close()
 
-        return self._observe(), reward, self._done(), {}
+        return self._observe(), reward, (self.board == (self.board & self.shots)).all(), {}
 
     def can_move(self, action: Any):
-        if self.action_space_type == "coords":
-            row, col = action
-        elif self.action_space_type == "flat":
-            row = action // self.board.shape[0]
-            col = action % self.board.shape[1]
-        else:
-            raise AssertionError
+
+
+        row = action // self.board.shape[0]
+        col = action % self.board.shape[1]
+
         return not self.shots[row, col]
 
     def _can_place(self, size, row, col, dr, dc):
@@ -147,7 +145,3 @@ class BattleshipEnv(gym.Env):
                         c += dc
         self.ships = self.ships[::-1]
         return self._observe()
-
-if __name__ == "__main__":
-    be = BattleshipEnv("flat-ships")
-    be.shots = be.board.astype(bool)

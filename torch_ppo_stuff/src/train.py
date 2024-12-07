@@ -20,6 +20,13 @@ from functools import partial
 import yaml
 
 
+"""
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
+"""
+
+
 CONFIG = {
     "agent": {
         "algo": "ppo",
@@ -60,7 +67,7 @@ CONFIG = {
 }
 
 def train(config):
-    # Set seeds
+
     np.random.seed(config["training"]["seed"])
     torch.manual_seed(config["training"]["seed"])
 

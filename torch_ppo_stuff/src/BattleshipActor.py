@@ -10,13 +10,21 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 from actor_critic import ActorBase, create_network
 
 
+"""
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
+"""
+
+
+
 class BattleshipActor(ActorBase):
     def __init__(self, device, state_dim, action_dim, layers=(256, 256)):
         super().__init__()
         self.device = device
         self.state_dim = state_dim
         self.logits_net = create_network((state_dim,) + layers + (action_dim,)).to(device)
-        self.forward_probs = False # required for torchscript tracing
+        self.forward_probs = False
 
     def forward(self, state):
         if self.forward_probs:
@@ -29,7 +37,6 @@ class BattleshipActor(ActorBase):
         return Categorical(logits=output)
 
     def _log_prob(self, dist, actions):
-        """Assumes actions is column vector, returns column vector"""
         return dist.log_prob(actions.squeeze()).unsqueeze(-1)
 
     def greedy(self, state):

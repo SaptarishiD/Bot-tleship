@@ -4,8 +4,7 @@ import numpy as np
 from tqdm import tqdm
 from keras import ops
 from helper_functions import test_bot
-
-#Define Battleship 
+ 
 class BattleshipEnvironment:
     def __init__(self, board_size=10):
         self.board_size = board_size
@@ -53,7 +52,6 @@ class BattleshipEnvironment:
             return False
 
 
-#Build the DQN Model
 @keras.saving.register_keras_serializable()
 class DQNModel(tf.keras.Model):
     def __init__(self, num_actions=100, **kwargs):

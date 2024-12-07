@@ -1,6 +1,18 @@
 import torch
 import numpy as np
 
+
+
+"""
+main references from official openai baselines library
+    https://github.com/openai/baselines/tree/master/baselines/ppo2
+    https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/
+
+# Citation: we also referred to: https://github.com/abhaybd/Fleet-AI but made various modifications to fit our cause and to make it easier for us to understand. We had to understand the code and delete quite a bit but still make it work to play the battleship game. Initially we had looked at just the openai baselines library implementation but due to some architecture and hyperparameter issues it wasn't learning as well, so we found this other implementation and modified it
+
+"""
+
+
 class PPOBuffer(object):
     def __init__(self):
         self.trajectories = []
@@ -16,16 +28,13 @@ class PPOBuffer(object):
         if isinstance(action, (float, int)):
             action = np.array([action])
         traj = self.trajectories[traj_id]
-        if traj.last_val is not None:
-            raise Exception("Cannot add data to finished trajectory!")
+    
         traj.states.append(state)
         traj.actions.append(action)
         traj.log_probs.append([log_prob])
         traj.rewards.append([reward])
 
     def put_data(self, data):
-        if len(data) != len(self.trajectories):
-            raise Exception(f"Required {len(data)} data points, found {len(self.trajectories)}")
         for d in data:
             self.put_single_data(*d)
 
@@ -34,8 +43,6 @@ class PPOBuffer(object):
         self.trajectories[traj_id].last_val = last_val
 
     def get(self, device):
-        if any(traj.last_val is None for traj in self.trajectories):
-            raise Exception("Not all trajectories have been finished!")
 
         to_tensor = lambda x: torch.from_numpy(np.array(x, dtype=np.float32)).to(device)
 
@@ -62,5 +69,4 @@ class _Traj(object):
         self.last_val = None
 
     def __len__(self):
-        assert all(len(x) == len(self.states) for x in [self.states, self.actions, self.log_probs, self.rewards])
         return len(self.states)
