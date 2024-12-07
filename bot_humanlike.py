@@ -15,10 +15,12 @@ class HumanLikeBot:
             "targets": deque(),
             "destroy_targets": deque(),
             "last_hit": None,
+            "first_hit": None,  # Initialize first_hit
             "direction": None,
         }
 
     def is_valid_attack(self, x, y):
+        print("Value at", x, y, "is", self.board.get_hidden_board()[x, y])
         return self.board.get_hidden_board()[x, y] == 0
 
     def remove_move(self, x, y):
@@ -36,6 +38,7 @@ class HumanLikeBot:
 
             if self.board.get_hidden_board()[x, y] == 2:  # Hit
                 self.state["last_hit"] = (x, y)
+                self.state["first_hit"] = (x, y)  # Set first_hit
                 self.update_targets()
                 self.state["mode"] = "target"  # Switch to target mode
             break
@@ -78,10 +81,11 @@ class HumanLikeBot:
                 self.update_destroy_targets()
 
             # Check if the ship has been fully uncovered
-            if self.check_if_ship_sunk(self.state["last_hit"]):
+            if self.check_if_ship_sunk(self.state["last_hit"], self.state["first_hit"]):
                 self.state["mode"] = "hunt"  # Return to hunt mode for the next ship
                 self.state["direction"] = None  # Reset direction
                 self.state["last_hit"] = None  # Reset the last hit
+                self.state["first_hit"] = None  # Reset the first hit
             break
         else:
             self.state["mode"] = "hunt"  # Return to hunt mode if no destroy targets remain
@@ -107,22 +111,32 @@ class HumanLikeBot:
             # Check up and down along the column (x-axis)
             for dx in [-1, 1]:
                 x = last_hit_x + dx
+                print("last_hit_x", last_hit_x, "dx", dx, "x", x)
+                print("Checking", x, last_hit_y)
                 if 0 <= x < self.board_size and self.is_valid_attack(x, last_hit_y):
+                    print("Appending", x, last_hit_y)
                     self.state["destroy_targets"].append((x, last_hit_y))
+                    print(self.state["destroy_targets"])
+        print(self.state["destroy_targets"])
 
-    def check_if_ship_sunk(self, last_hit):
+    def check_if_ship_sunk(self, last_hit, first_hit):
+        def check_adjacent(x, y, dx, dy):
+            for d in [-1, 1]:
+                nx, ny = x + d * dx, y + d * dy
+                if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
+                    if self.board.get_hidden_board()[nx, ny] == 2:
+                        return False
+            return True
+
         last_hit_x, last_hit_y = last_hit
+        first_hit_x, first_hit_y = first_hit
+
         if self.state["direction"] == "horizontal":
-            for dy in [-1, 1]:
-                y = last_hit_y + dy
-                if 0 <= y < self.board_size and self.board.get_hidden_board()[last_hit_x, y] == 2:
-                    return False
+            return check_adjacent(last_hit_x, last_hit_y, 0, 1) and check_adjacent(first_hit_x, first_hit_y, 0, 1)
         elif self.state["direction"] == "vertical":
-            for dx in [-1, 1]:
-                x = last_hit_x + dx
-                if 0 <= x < self.board_size and self.board.get_hidden_board()[x, last_hit_y] == 2:
-                    return False
-        return True  # No more parts of the ship are left
+            return check_adjacent(last_hit_x, last_hit_y, 1, 0) and check_adjacent(first_hit_x, first_hit_y, 1, 0)
+
+        return True
 
     def attack(self):
         if self.state["mode"] == "hunt":
@@ -134,5 +148,10 @@ class HumanLikeBot:
 
 
 if __name__ == "__main__":
+    # board = Board(10)
+    # bot = HumanLikeBot(board)
+    # while not board.check_if_game_over():
+    #     bot.attack()
+    #     print(board.get_board())
     moves, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(1000, 10, Bot=HumanLikeBot)
     print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")

@@ -3,8 +3,9 @@ import keras
 import numpy as np
 from tqdm import tqdm
 from keras import ops
-from helper_functions import test_bot
- 
+# from helper_functions import test_bot
+
+#Define Battleship 
 class BattleshipEnvironment:
     def __init__(self, board_size=10):
         self.board_size = board_size
@@ -140,10 +141,10 @@ def train_model():
     num_actions = env.board_size ** 2 
     model = DQNModel(num_actions)
     target_model = DQNModel(num_actions)
-    replay_buffer = ReplayBuffer(buffer_size=1000)
+    replay_buffer = ReplayBuffer(buffer_size=10)
 
-    trainer = DQNTrainer(model, target_model, replay_buffer)
-    num_epochs= 3000
+    trainer = DQNTrainer(model, target_model, replay_buffer, batch_size=8, gamma=0.99)
+    num_epochs= 150
     epsilon = 0.2  
     update_steps = 100  
     agent = DQNAgent(model, num_actions)
@@ -188,13 +189,13 @@ def train_model():
         except:
             pass
          
-        model.save("bot_dqn_final.keras")   
+        model.save("bot_dqn_testing.keras")   
 
     print("Model Trained!\n")
 
 def test_model(env, agent):
     num_actions = env.board_size ** 2
-    model = keras.models.load_model("bot_dqn.keras")
+    model = keras.models.load_model("bot_dqn_final.keras")
     agent = DQNAgent(model, num_actions)
     total_shots = []
     for _ in tqdm(range(100)):
@@ -229,9 +230,9 @@ class DQNBot: #for testing
         self.valid_moves.discard(action)
 
 if __name__ == '__main__':
-    # train_model()
+    train_model()
     
     # model = keras.models.load_model("bot_dqn.keras")
     
-    total, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, [2, 3, 3, 4, 5], Bot=DQNBot)
-    print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")
+    # total, mean, median, max_, min_, std, avg_hits_at_move, avg_moves_for_hit = test_bot(100, 10, [2, 3, 3, 4, 5], Bot=DQNBot)
+    # print(f"Mean: {mean}, Median: {median}, Max: {max_}, Min: {min_}, Std: {std}, avg_hits_at_move: {avg_hits_at_move}, avg_moves_for_hit: {avg_moves_for_hit}")
