@@ -1,0 +1,47 @@
+{
+    "agent": {
+        "algo": "ppo",
+        "model_name": "PPO_flat-ships-latent_flat_discount-0.7-latest",
+        "actor_type": "disc",
+        "save_dir": "models",
+        "layers": [
+            256,
+            256
+        ]
+    },
+    "env": {
+        "max_steps": 200,
+        "state_space": "flat-ships-latent",
+        "action_space": "flat",
+        "board_width": 10,
+        "board_height": 10,
+        "latent_var_precision": 16,
+        "ship_sizes": [
+            2,
+            3,
+            3,
+            4,
+            5
+        ]
+    },
+    "training": {
+        "discount": 0.7,
+        "gpu_idx": 0,
+        "num_procs": 1,
+        "ppo": {
+            "actor_learning_rate": 0.0005,
+            "actor_steps": 70,
+            "clip_ratio": 0.3,
+            "critic_learning_rate": 0.002,
+            "critic_steps": 70,
+            "entropy_coeff": 0.002,
+            "gae_lam": 0.95,
+            "target_kl": 0.012
+        },
+        "save_interval": 5,
+        "seed": 42,
+        "total_steps": 4000,
+        "train_samples": 3900,
+        "use_gpu": false
+    }
+}

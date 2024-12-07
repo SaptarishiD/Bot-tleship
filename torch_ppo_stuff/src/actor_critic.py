@@ -3,6 +3,9 @@ from torch import nn
 from torch.distributions import Categorical, Normal, Distribution
 import numpy as np
 
+
+# from the openai official library code: https://github.com/openai/spinningup/blob/master/spinup/algos/pytorch/ppo/core.py
+
 class MultiCategorical(Distribution):
     def __init__(self, dists):
         super().__init__(validate_args=False)

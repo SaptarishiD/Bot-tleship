@@ -14,7 +14,7 @@ class _Ship(object):
 
 
 class BattleshipEnv(gym.Env):
-    def __init__(self, observation_space="flat-ships", action_space="coords", board_width=10, board_height=10,
+    def __init__(self, observation_space, action_space, board_width=10, board_height=10,
                  ships=(1, 2, 3, 4, 5), latent_var_precision=8):
         self.board = np.zeros((board_height, board_width), dtype=bool)
         self.ship_lens = sorted(ships)
@@ -22,7 +22,6 @@ class BattleshipEnv(gym.Env):
         self.observation_space_type = observation_space
         self.action_space_type = action_space
         self.latent_var_precision = latent_var_precision
-        self.window = None
         self.ships = None
 
         if action_space == "coords":
@@ -148,11 +147,6 @@ class BattleshipEnv(gym.Env):
                         c += dc
         self.ships = self.ships[::-1]
         return self._observe()
-
-    def close(self):
-        if self.window is not None:
-            self.window.close()
-        self.window = None
 
 if __name__ == "__main__":
     be = BattleshipEnv("flat-ships")
