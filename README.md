@@ -11,4 +11,4 @@ The three bots use the following methods:
 
 - Proximal Policy Optimization
 
-The presentation with overview and results can be viewed here
+The presentation with overview and results can be viewed [here](https://github.com/SaptarishiD/Bot-tleship/blob/main/Final%20Presentation.pdf)
